@@ -1,0 +1,17 @@
+{
+  "name": "imagem-base64-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "next": "13.4.19",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "node-fetch": "^2.6.7"
+  }
+}
