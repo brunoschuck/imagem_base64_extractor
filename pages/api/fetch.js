@@ -10,7 +10,8 @@ export default async function handler(req, res) {
   const $marc = $('#marcacao');
   if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
 
-  // 1. Processa e converte as imagens para Base64 antes de limpar o HTML
+  // 1. Processa e converte as imagens para Base64 antes de limpar o HTML.
+  //    Essa parte é a mesma, já que funciona bem.
   const imgPromises = [];
   $marc.find('img').each((i, img) => {
     const src = $(img).attr('src');
@@ -34,17 +35,23 @@ export default async function handler(req, res) {
 
   await Promise.all(imgPromises);
 
-  // 2. Cria uma cópia limpa do conteúdo, preservando a estrutura
-  const $clean = $marc.clone();
-
-  // 3. Remove todos os elementos que não são permitidos
+  // 2. Agora, a lógica de limpeza foi alterada para evitar duplicação.
+  //    Vamos selecionar apenas os "filhos diretos" de #marcacao que são permitidos.
   const allowed = 'h1,h2,h3,p,ul,li,a,img';
-  $clean.find(':not(' + allowed.replace(/,/g, ', ') + ')').remove();
-  
-  // 4. Remove elementos vazios que podem ter sobrado
-  $clean.find(':empty:not(img)').remove();
+  const $clean = cheerio.load('<div></div>')('div');
 
-  // 5. Envia o HTML limpo e com as imagens convertidas
+  // Seleciona os filhos diretos de #marcacao que estão na lista de permitidos
+  $marc.children(allowed).each((i, el) => {
+    // Clona o elemento e todos os seus filhos de uma vez
+    $clean.append($(el).clone());
+  });
+
+  // 3. Remove os "a" que são apenas links de índice, para não duplicar o texto do índice
+  $clean.find('ul a').each((i, el) => {
+    $(el).attr('href', '#');
+  });
+
+  // 4. Envia o HTML limpo e com as imagens convertidas
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send($clean.html());
 }
