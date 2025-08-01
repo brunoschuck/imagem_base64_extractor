@@ -7,6 +7,7 @@ export default function Home() {
   const handle = async () => {
     const res = await fetch(`/api/fetch?url=${encodeURIComponent(url)}`);
     const data = await res.text();
+    console.log('HTML retornado:', data); // 🔍 DEBUG
     setHtml(data);
   };
 
