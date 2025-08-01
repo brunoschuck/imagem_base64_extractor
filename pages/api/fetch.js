@@ -11,21 +11,13 @@ export default async function handler(req, res) {
 
   if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
 
+  // Remove blocos que provavelmente são índice/sumário
+  $marc.find('.indice, .indice-artigo, .toc, nav, [id*=indice], [class*=indice], [class*=toc]').remove();
+
   const allowed = 'h1,h2,h3,p,ul,li,a,img';
   const $clean = cheerio.load('<div></div>')('div');
 
-  const seenTexts = new Set();
-
   $marc.find(allowed).each((i, el) => {
-    const tag = $(el).get(0).tagName;
-    const text = $(el).text().trim();
-
-    // Evita duplicar blocos com mesmo texto visível (exclui <img>)
-    if (!['img'].includes(tag) && text && seenTexts.has(text)) {
-      return; // pula duplicado
-    }
-
-    if (text) seenTexts.add(text);
     $clean.append($(el).clone());
   });
 
