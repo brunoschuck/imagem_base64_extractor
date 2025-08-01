@@ -11,8 +11,8 @@ export default async function handler(req, res) {
 
   if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
 
-  // Remove blocos que provavelmente são índice/sumário
-  $marc.find('.indice, .indice-artigo, .toc, nav, [id*=indice], [class*=indice], [class*=toc]').remove();
+  // Remover sumário/índice antes de clonar o conteúdo
+  $marc.find('ul[class*="indice"], ul[id*="indice"], .toc, nav, .table-of-contents, #table-of-contents').remove();
 
   const allowed = 'h1,h2,h3,p,ul,li,a,img';
   const $clean = cheerio.load('<div></div>')('div');
@@ -27,9 +27,7 @@ export default async function handler(req, res) {
   $clean.find('img').each((i, img) => {
     const srcRaw = $(img).attr('src');
     if (!srcRaw) return;
-
     const fullSrc = new URL(srcRaw, url).href;
-
     if (seenImages.has(fullSrc)) {
       $(img).remove();
       return;
@@ -37,7 +35,6 @@ export default async function handler(req, res) {
     seenImages.add(fullSrc);
 
     const alt = $(img).attr('alt') || '';
-
     const p = fetch(fullSrc)
       .then(r => {
         const contentType = r.headers.get('content-type') || 'image/jpeg';
