@@ -11,16 +11,24 @@ export default async function handler(req, res) {
 
   if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
 
-  // Remover sumário/índice antes de clonar o conteúdo
-  $marc.find('ul[class*="indice"], ul[id*="indice"], .toc, nav, .table-of-contents, #table-of-contents').remove();
+  // Captura o índice do HTML original
+  const $indice = $('nav.indice, nav#indice, .indice, #indice').first().clone();
 
-  const allowed = 'h1,h2,h3,p,ul,li,a,img';
+  // Cria contêiner limpo
   const $clean = cheerio.load('<div></div>')('div');
 
-  $marc.find(allowed).each((i, el) => {
+  // Insere o índice no topo, se encontrado
+  if ($indice.length) {
+    $clean.append($indice);
+  }
+
+  // Clona os filhos válidos da marcação
+  const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span';
+  $marc.children(allowed).each((i, el) => {
     $clean.append($(el).clone());
   });
 
+  // Converte imagens para base64
   const seenImages = new Set();
   const imgPromises = [];
 
