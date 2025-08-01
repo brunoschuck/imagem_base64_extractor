@@ -14,11 +14,22 @@ export default async function handler(req, res) {
   const allowed = 'h1,h2,h3,p,ul,li,a,img';
   const $clean = cheerio.load('<div></div>')('div');
 
+  const seenTexts = new Set();
+
   $marc.find(allowed).each((i, el) => {
+    const tag = $(el).get(0).tagName;
+    const text = $(el).text().trim();
+
+    // Evita duplicar blocos com mesmo texto visível (exclui <img>)
+    if (!['img'].includes(tag) && text && seenTexts.has(text)) {
+      return; // pula duplicado
+    }
+
+    if (text) seenTexts.add(text);
     $clean.append($(el).clone());
   });
 
-  const seen = new Set();
+  const seenImages = new Set();
   const imgPromises = [];
 
   $clean.find('img').each((i, img) => {
@@ -27,12 +38,11 @@ export default async function handler(req, res) {
 
     const fullSrc = new URL(srcRaw, url).href;
 
-    // Se já vimos essa imagem, remove ela
-    if (seen.has(fullSrc)) {
+    if (seenImages.has(fullSrc)) {
       $(img).remove();
       return;
     }
-    seen.add(fullSrc);
+    seenImages.add(fullSrc);
 
     const alt = $(img).attr('alt') || '';
 
