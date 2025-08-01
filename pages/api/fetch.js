@@ -8,33 +8,35 @@ export default async function handler(req, res) {
   const htmlRaw = await fetch(url).then(r => r.text());
   const $ = cheerio.load(htmlRaw);
   const $marc = $('#marcacao');
+
   if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
 
   const allowed = 'h1,h2,h3,p,ul,li,a,img';
   const $clean = cheerio.load('<div></div>')('div');
 
-  // A ÚNICA MUDANÇA ESTÁ AQUI:
-  // Usa `.children()` para selecionar apenas os elementos de nível superior.
-  // Assim, a estrutura interna (como <li> dentro de <ul>) é clonada junto, uma única vez.
-  $marc.children().each((i, el) => {
-    // Verifica se o elemento filho direto está na lista de permitidos
-    if ($(el).is(allowed)) {
-      $clean.append($(el).clone());
-    }
+  $marc.find(allowed).each((i, el) => {
+    $clean.append($(el).clone());
   });
 
+  const seen = new Set();
   const imgPromises = [];
+
   $clean.find('img').each((i, img) => {
-    const src = $(img).attr('src');
-    const alt = $(img).attr('alt') || '';
-    
-    // É importante garantir que a URL seja absoluta, especialmente se a imagem for relativa
-    if (!src || src.startsWith('data:')) {
-        return;
+    const srcRaw = $(img).attr('src');
+    if (!srcRaw) return;
+
+    const fullSrc = new URL(srcRaw, url).href;
+
+    // Se já vimos essa imagem, remove ela
+    if (seen.has(fullSrc)) {
+      $(img).remove();
+      return;
     }
-    const imageUrl = new URL(src, url).href;
-    
-    const p = fetch(imageUrl)
+    seen.add(fullSrc);
+
+    const alt = $(img).attr('alt') || '';
+
+    const p = fetch(fullSrc)
       .then(r => {
         const contentType = r.headers.get('content-type') || 'image/jpeg';
         return r.buffer().then(buf => {
@@ -46,6 +48,7 @@ export default async function handler(req, res) {
       .catch(() => {
         $(img).remove();
       });
+
     imgPromises.push(p);
   });
 
