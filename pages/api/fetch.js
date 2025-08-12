@@ -23,7 +23,8 @@ export default async function handler(req, res) {
 
   // 📌 Captura apenas o slug (sem domínio)
   const { pathname } = new URL(url);
-  const slug = pathname.replace(/^\/+|\/+$/g, ''); // remove / no início/fim
+  const slug = pathname.replace(/^\/+|\/+$/g, '').split('/').pop();
+// remove / no início/fim
 
   // 📌 Extrai conteúdo principal
   const $marc = $('#marcacao');
