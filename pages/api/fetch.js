@@ -5,30 +5,41 @@ export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'URL é obrigatória' });
 
-  const htmlRaw = await fetch(url).then(r => r.text());
-  const $ = cheerio.load(htmlRaw);
-  const $marc = $('#marcacao');
-
-  if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
-
-  // Captura o índice do HTML original
-  const $indice = $('nav.indice, nav#indice, .indice, #indice').first().clone();
-
-  // Cria contêiner limpo
-  const $clean = cheerio.load('<div></div>')('div');
-
-  // Insere o índice no topo, se encontrado
-  if ($indice.length) {
-    $clean.append($indice);
+  // Validação simples de URL
+  try {
+    new URL(url);
+    if (!/^https?:\/\//.test(url)) throw new Error();
+  } catch {
+    return res.status(400).json({ error: 'URL inválida' });
   }
 
-  // Clona os filhos válidos da marcação
+  const htmlRaw = await fetch(url).then(r => r.text());
+  const $ = cheerio.load(htmlRaw);
+
+  // 📌 Captura os metadados
+  const titulo = $('title').first().text().trim();
+  const descricao = $('meta[name="description"]').attr('content') || '';
+  const palavraChave = $('meta[property="article:tag"]').attr('content') || '';
+
+  // 📌 Captura apenas o slug (sem domínio)
+  const { pathname } = new URL(url);
+  const slug = pathname.replace(/^\/+|\/+$/g, ''); // remove / no início/fim
+
+  // 📌 Extrai conteúdo principal
+  const $marc = $('#marcacao');
+  if (!$marc.length) return res.status(404).json({ error: 'Conteúdo não encontrado' });
+
+  const $indice = $('nav.indice, nav#indice, .indice, #indice').first().clone();
+  const $clean = cheerio.load('<div></div>')('div');
+
+  if ($indice.length) $clean.append($indice);
+
   const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span';
   $marc.children(allowed).each((i, el) => {
     $clean.append($(el).clone());
   });
 
-  // Converte imagens para base64
+  // 📌 Converte imagens para base64
   const seenImages = new Set();
   const imgPromises = [];
 
@@ -60,6 +71,12 @@ export default async function handler(req, res) {
   });
 
   await Promise.all(imgPromises);
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send($clean.html());
+
+  res.status(200).json({
+    titulo,
+    descricao,
+    palavraChave,
+    slug,
+    html: $clean.html()
+  });
 }
