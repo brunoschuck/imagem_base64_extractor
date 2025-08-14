@@ -16,14 +16,22 @@ export default async function handler(req, res) {
   const htmlRaw = await fetch(url).then(r => r.text());
   const $ = cheerio.load(htmlRaw);
 
-  // 📌 Captura os metadados
+  // 📌 Metadados
   const titulo = $('title').first().text().trim();
   const descricao = $('meta[name="description"]').attr('content') || '';
   const palavraChave = $('meta[property="article:tag"]').attr('content') || '';
 
-  // 📌 Captura apenas o último segmento da URL (slug final)
+  // 📌 Slug final (somente última parte do caminho)
   const { pathname } = new URL(url);
   const slug = pathname.replace(/^\/+|\/+$/g, '').split('/').pop();
+
+  // 📌 Imagem destacada
+  let imagemDestacada = '';
+  const imgEl = $('.elementor-widget-theme-post-featured-image img').first();
+  if (imgEl.length) {
+    const srcRaw = imgEl.attr('src');
+    if (srcRaw) imagemDestacada = new URL(srcRaw, url).href;
+  }
 
   // 📌 Extrai conteúdo principal
   const $marc = $('#marcacao');
@@ -31,29 +39,24 @@ export default async function handler(req, res) {
 
   const $indice = $('nav.indice, nav#indice, .indice, #indice').first().clone();
   const $clean = cheerio.load('<div></div>')('div');
-
   if ($indice.length) $clean.append($indice);
 
-  const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span,figure,iframe';
+  const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span,iframe';
   $marc.children(allowed).each((i, el) => {
     $clean.append($(el).clone());
   });
 
-  // 📌 Converte iframes do YouTube em URL limpa
-  $clean.find('iframe').each((i, el) => {
-    const src = $(el).attr('src');
-    if (src) {
-      const cleanUrl = src.split('?')[0]; // remove query string
-      $(el).replaceWith(cleanUrl);
-    } else {
-      $(el).remove();
+  // 📌 Ajuste para iframes do YouTube (pegar só a URL)
+  $clean.find('iframe').each((i, iframe) => {
+    const src = $(iframe).attr('src') || '';
+    if (src.includes('youtube.com/embed')) {
+      $(iframe).replaceWith(src.split('?')[0]); // mantém só a URL pura
     }
   });
 
   // 📌 Converte imagens para base64
   const seenImages = new Set();
   const imgPromises = [];
-
   $clean.find('img').each((i, img) => {
     const srcRaw = $(img).attr('src');
     if (!srcRaw) return;
@@ -74,9 +77,7 @@ export default async function handler(req, res) {
           $(img).attr('alt', alt);
         });
       })
-      .catch(() => {
-        $(img).remove();
-      });
+      .catch(() => $(img).remove());
 
     imgPromises.push(p);
   });
@@ -88,6 +89,7 @@ export default async function handler(req, res) {
     descricao,
     palavraChave,
     slug,
+    imagemDestacada,
     html: $clean.html()
   });
 }
