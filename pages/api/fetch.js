@@ -21,10 +21,9 @@ export default async function handler(req, res) {
   const descricao = $('meta[name="description"]').attr('content') || '';
   const palavraChave = $('meta[property="article:tag"]').attr('content') || '';
 
-  // 📌 Captura apenas o slug (sem domínio)
+  // 📌 Captura apenas o último segmento da URL (slug final)
   const { pathname } = new URL(url);
   const slug = pathname.replace(/^\/+|\/+$/g, '').split('/').pop();
-// remove / no início/fim
 
   // 📌 Extrai conteúdo principal
   const $marc = $('#marcacao');
@@ -35,9 +34,20 @@ export default async function handler(req, res) {
 
   if ($indice.length) $clean.append($indice);
 
-  const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span';
+  const allowed = 'h1,h2,h3,p,ul,li,a,img,div,ol,span,figure,iframe';
   $marc.children(allowed).each((i, el) => {
     $clean.append($(el).clone());
+  });
+
+  // 📌 Converte iframes do YouTube em URL limpa
+  $clean.find('iframe').each((i, el) => {
+    const src = $(el).attr('src');
+    if (src) {
+      const cleanUrl = src.split('?')[0]; // remove query string
+      $(el).replaceWith(cleanUrl);
+    } else {
+      $(el).remove();
+    }
   });
 
   // 📌 Converte imagens para base64
