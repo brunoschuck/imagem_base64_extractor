@@ -16,20 +16,15 @@ export default function Home() {
   };
 
   const baixarImagem = () => {
-  if (!data?.imagemDestacadaBase64) return;
-  const a = document.createElement('a');
-  a.href = data.imagemDestacadaBase64;
-  // Nome do arquivo = título do post (slug seguro)
-  const nomeArquivo = data.titulo
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
-    .replace(/[^a-zA-Z0-9-_]/g, '_') // remove caracteres inválidos
-    .toLowerCase();
-  a.download = `${nomeArquivo}.jpg`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-};
-  
+    if (!data?.imagemDestacadaBase64) return;
+    const a = document.createElement('a');
+    a.href = data.imagemDestacadaBase64;
+    a.download = `${data.titulo}.jpg`; // Nome igual ao título original
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <div style={{ padding: 20, maxWidth: 900, margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
@@ -66,34 +61,26 @@ export default function Home() {
           <p><strong>Palavra-chave:</strong> {data.palavraChave}</p>
           <p><strong>Slug:</strong> {data.slug}</p>
 
-          {data.imagemDestacada && (
-            <div style={{ marginTop: 20 }}>
-              <h3>Imagem destacada:</h3>
+          {data.imagemDestacadaBase64 && (
+            <div style={{ marginBottom: 20 }}>
+              <h3>Imagem de Destaque</h3>
               <img
-                src={data.imagemDestacada}
-                alt="Imagem destacada"
-                style={{
-                  maxWidth: '300px', // imagem menor
-                  height: 'auto',
-                  border: '1px solid #ccc',
-                  borderRadius: 4
-                }}
+                src={data.imagemDestacadaBase64}
+                alt="Imagem de destaque"
+                style={{ maxWidth: '200px', display: 'block', marginBottom: 10 }}
               />
-              <br />
               <button
                 onClick={baixarImagem}
                 style={{
-                  display: 'inline-block',
-                  marginTop: 10,
-                  padding: '8px 16px',
-                  background: '#007bff',
+                  padding: '6px 12px',
+                  backgroundColor: '#28a745',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 4,
                   cursor: 'pointer'
                 }}
               >
-                Baixar imagem
+                Baixar Imagem
               </button>
             </div>
           )}
