@@ -15,26 +15,16 @@ export default function Home() {
     }
   };
 
-  const baixarImagem = async () => {
-    if (!data?.imagemDestacada) return;
-    try {
-      const response = await fetch(data.imagemDestacada);
-      const blob = await response.blob();
-      const urlBlob = window.URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = urlBlob;
-      a.download = 'imagem-destacada.jpg';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      window.URL.revokeObjectURL(urlBlob);
-    } catch (err) {
-      console.error('Erro ao baixar imagem:', err);
-    }
-  };
-
+  const baixarImagem = () => {
+  if (!data?.imagemDestacadaBase64) return;
+  const a = document.createElement('a');
+  a.href = data.imagemDestacadaBase64;
+  a.download = 'imagem-destacada.jpg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+  
   return (
     <div style={{ padding: 20, maxWidth: 900, margin: 'auto', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
