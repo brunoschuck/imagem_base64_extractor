@@ -51,6 +51,33 @@ export default function Home() {
           <p><strong>Palavra-chave:</strong> {data.palavraChave}</p>
           <p><strong>Slug:</strong> {data.slug}</p>
 
+          {data.imagemDestacada && (
+            <div style={{ marginTop: 20 }}>
+              <h3>Imagem destacada:</h3>
+              <img
+                src={data.imagemDestacada}
+                alt="Imagem destacada"
+                style={{ maxWidth: '100%', border: '1px solid #ccc', borderRadius: 4 }}
+              />
+              <br />
+              <a
+                href={data.imagemDestacada}
+                download
+                style={{
+                  display: 'inline-block',
+                  marginTop: 10,
+                  padding: '8px 16px',
+                  background: '#007bff',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  borderRadius: 4
+                }}
+              >
+                Baixar imagem
+              </a>
+            </div>
+          )}
+
           <h2>HTML Gerado</h2>
           <textarea
             rows="12"
