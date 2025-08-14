@@ -8,10 +8,30 @@ export default function Home() {
     try {
       const res = await fetch(`/api/fetch?url=${encodeURIComponent(url)}`);
       const json = await res.json();
-      console.log('Retorno da API:', json); // 🔍 DEBUG
+      console.log('Retorno da API:', json);
       setData(json);
     } catch (err) {
       console.error('Erro ao buscar:', err);
+    }
+  };
+
+  const baixarImagem = async () => {
+    if (!data?.imagemDestacada) return;
+    try {
+      const response = await fetch(data.imagemDestacada);
+      const blob = await response.blob();
+      const urlBlob = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = 'imagem-destacada.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (err) {
+      console.error('Erro ao baixar imagem:', err);
     }
   };
 
@@ -57,24 +77,29 @@ export default function Home() {
               <img
                 src={data.imagemDestacada}
                 alt="Imagem destacada"
-                style={{ maxWidth: '100%', border: '1px solid #ccc', borderRadius: 4 }}
+                style={{
+                  maxWidth: '300px', // imagem menor
+                  height: 'auto',
+                  border: '1px solid #ccc',
+                  borderRadius: 4
+                }}
               />
               <br />
-              <a
-                href={data.imagemDestacada}
-                download
+              <button
+                onClick={baixarImagem}
                 style={{
                   display: 'inline-block',
                   marginTop: 10,
                   padding: '8px 16px',
                   background: '#007bff',
                   color: '#fff',
-                  textDecoration: 'none',
-                  borderRadius: 4
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer'
                 }}
               >
                 Baixar imagem
-              </a>
+              </button>
             </div>
           )}
 
