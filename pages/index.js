@@ -19,7 +19,12 @@ export default function Home() {
   if (!data?.imagemDestacadaBase64) return;
   const a = document.createElement('a');
   a.href = data.imagemDestacadaBase64;
-  a.download = 'imagem-destacada.jpg';
+  // Nome do arquivo = título do post (slug seguro)
+  const nomeArquivo = data.titulo
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-zA-Z0-9-_]/g, '_') // remove caracteres inválidos
+    .toLowerCase();
+  a.download = `${nomeArquivo}.jpg`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
